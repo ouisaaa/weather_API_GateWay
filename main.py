@@ -1,11 +1,23 @@
 from typing import Union
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from config import Config
 
+#실행: uvicorn main:app --port 5000
 app = FastAPI()
-config=Config()
 
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 Origin 허용, 필요에 따라 원하는 Origin을 명시할 수 있습니다.
+    allow_credentials=True, #자격증명 사용여부
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+
+config=Config()
 #
 # @app.get("/")
 # async def read_root():
