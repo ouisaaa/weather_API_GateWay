@@ -25,6 +25,7 @@ config=Config()
 
 import httpx
 import asyncio
+from datetime import datetime
 
 @app.get("/getCurrent")
 async def request_location(x: float=130,y: float=63):
@@ -44,8 +45,18 @@ async def request_SrtFcst(city: str,district: str,neighborhood: str):
         response = await client.get(f'{config.DATA_DOMAIN}:4003/weather/getSrtNcst?city={city}&district={district}&neighborhood={neighborhood}')
         return response.json()
 
+import logging
 @app.get("/getVliageFcst")
 async def request_VliageFcst(city: str,district: str,neighborhood: str):
+    # direction=[2,5,8,11,14,17,20,23]
+    #
+    # now = datetime.now()
+    # current_time = now.strftime("%H")
+    # for i in direction:
+    #     if(i>int(current_time)):
+    #         current_time=str(i)
+    #         break
+    #print(current_time)
     async with httpx.AsyncClient() as client:
         response = await client.get(f'{config.DATA_DOMAIN}:4004/weather/getVliageFcst?city={city}&district={district}&neighborhood={neighborhood}')
         return response.json()
