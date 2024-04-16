@@ -11,7 +11,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 모든 Origin 허용, 필요에 따라 원하는 Origin을 명시할 수 있습니다.
-    allow_credentials=True, #자격증명 사용여부
+    #allow_credentials=True, #자격증명 사용여부
     allow_methods=["GET"],
     allow_headers=["*"],
 )
@@ -25,7 +25,7 @@ config=Config()
 
 import httpx
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 
 @app.get("/getCurrent")
 async def request_location(x: float=130,y: float=63):
@@ -35,30 +35,70 @@ async def request_location(x: float=130,y: float=63):
 
 @app.get("/getSrtFcst")
 async def request_SrtFcst(city: str,district: str,neighborhood: str):
+    today = datetime.today()
+    formatted_date = today.strftime('%Y%m%d')
+
+    now = datetime.now()
+    current_time = now.hour
+
+    if now.minute < 30:
+        current_time -= 1
+
+    if (int(current_time) < 10):
+        current_time = str("0" + str(current_time))
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(f'{config.DATA_DOMAIN}:4002/weather/getUltraSrtFcst?city={city}&district={district}&neighborhood={neighborhood}')
+        response = await client.get(f'{config.DATA_DOMAIN}:4002/weather/getUltraSrtFcst?city={city}&district={district}&neighborhood={neighborhood}&nowDate={formatted_date}&nowTime={str(current_time)+"30"}')
         return response.json()
 
 @app.get("/getSrtNcst")
-async def request_SrtFcst(city: str,district: str,neighborhood: str):
+async def request_SrtNcst(city: str,district: str,neighborhood: str):
+    today = datetime.today()
+    formatted_date = today.strftime('%Y%m%d')
+
+    now = datetime.now()
+    current_time = now.hour
+
+    if now.minute < 30:
+        current_time -= 1
+
+    if (int(current_time)<10):
+        current_time = str("0"+str(current_time))
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(f'{config.DATA_DOMAIN}:4003/weather/getSrtNcst?city={city}&district={district}&neighborhood={neighborhood}')
+        response = await client.get(f'{config.DATA_DOMAIN}:4003/weather/getSrtNcst?city={city}&district={district}&neighborhood={neighborhood}&nowDate={formatted_date}&nowTime={str(current_time)+"00"}')
         return response.json()
 
 import logging
 @app.get("/getVliageFcst")
 async def request_VliageFcst(city: str,district: str,neighborhood: str):
-    # direction=[2,5,8,11,14,17,20,23]
-    #
-    # now = datetime.now()
-    # current_time = now.strftime("%H")
-    # for i in direction:
-    #     if(i>int(current_time)):
-    #         current_time=str(i)
-    #         break
-    #print(current_time)
+    today= datetime.today()
+    formatted_date = today.strftime('%Y%m%d')
+
+    direction=[2,5,8,11,14,17,20,23]
+
+    now = datetime.now()
+    current_time = now.hour
+    temp_time = current_time
+
+    if current_time < 2:
+        delta = timedelta(days=1)
+        temp_date= today-delta
+        formatted_date=temp_date.strftime('%Y%m%d')
+        temp_time=str(direction[-1])
+    else:
+        for i in direction:
+            if(i<current_time):
+                temp_time=str(i)
+                continue
+            elif i==current_time and now.minute>10:
+                temp_time = str(i)
+                continue
+            else:
+                break
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(f'{config.DATA_DOMAIN}:4004/weather/getVliageFcst?city={city}&district={district}&neighborhood={neighborhood}')
+        response = await client.get(f'{config.DATA_DOMAIN}:4004/weather/getVliageFcst?city={city}&district={district}&neighborhood={neighborhood}&nowDate={formatted_date}&nowTime={temp_time+"00"}')
         return response.json()
 
 @app.get("/districtList")
